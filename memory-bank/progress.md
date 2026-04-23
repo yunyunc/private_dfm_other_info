@@ -65,3 +65,7 @@
 - 20260423 进行中: 初始化当前工作区 git 仓库并推送到 `https://github.com/yunyunc/private_dfm_other_info.git`.
 - 20260423 已完成: 删除失真的 `.gitmodules`, 补充 `.gitignore` 排除本地构建/运行态输出.
 - 20260423 待完成: 创建初始提交并完成 GitHub 首次推送.
+# v1.8
+- 20260423 已完成: 当前工作区初始化 git 仓库并创建根提交 `13d600ecf11febf0439ef806e9d08ec4567d5210`.
+- 20260423 已完成: GitHub `origin/main` 已与本地提交对齐.
+- 20260423 已完成: `.gitignore` 补充本地运行态忽略, 删除失真的 `.gitmodules`.
