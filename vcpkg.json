@@ -1,0 +1,36 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
+  "name": "occtimgui",
+  "version": "1.0.0",
+  "builtin-baseline": "0e39c10736341cc8135b560438229bbda3d3219a",
+  "dependencies": [
+    "opencascade",
+    {
+      "name": "imgui",
+      "features": ["glfw-binding", "opengl3-binding"]
+    },
+    "glfw3",
+    "netgen",
+    "boost-signals2",
+    "boost-test",
+    "spdlog",
+    {
+      "name": "libigl",
+      "features": ["cgal"]
+    },
+    "eigen3",
+    "nlohmann-json",
+    "gtest",
+    "nativefiledialog-extended"
+  ],
+  "overrides": [
+    {
+      "name": "fmt",
+      "version": "11.2.0"
+    },
+    {
+      "name": "spdlog",
+      "version-semver": "1.15.3"
+    }
+  ]
+}

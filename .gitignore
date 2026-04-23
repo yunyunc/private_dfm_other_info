@@ -1,0 +1,46 @@
+# Build directories
+build/
+build_debug/
+
+# vcpkg (local package manager)
+vcpkg/
+
+# Third-party libraries
+third_party/nfd/
+
+# Editor and OS things
+/.idea/
+.DS_Store
+.vscode
+*.swp
+tags
+
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+
+/docs/
+/vcpkg_installed/
+/data/
+VERIFY_IFR_PATHS.cmake
+IFR_wrapper.cmake
+
+
+
+# CMake
+CMakeUserPresets.json
+
+# Local runtime state
+dist/
+logs/
+temp.txt
+imgui.ini
+
+# Embedded IFR runtime state
+IFR/installed/.claude/
+IFR/installed/logs/
+IFR/installed/output/

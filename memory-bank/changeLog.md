@@ -1,0 +1,119 @@
+# 变更记录
+
+- 版本: v0.3
+- 更新日期: 20260313
+- 目的: 记录关键改动的根因、文件、验证方式和回滚入口，便于后续排障与 A/B 对比
+
+## 20260313 DFM 外部 SDK / DLL
+- 问题:
+  - 需要把现有 DFM report 输入与 DFM 可视化能力集成到其他软件里，不能再依赖当前 ImGui 主程序
+- 根因:
+  - 现有能力散落在 [FeatureRecognitionModel.cpp](/D:/code/OcctImgui-worktree/src/model/FeatureRecognitionModel.cpp)、[OcctView.cpp](/D:/code/OcctImgui-worktree/src/view/OcctView.cpp)、[ImGuiView.cpp](/D:/code/OcctImgui-worktree/src/view/ImGuiView.cpp)
+  - 缺少一个无 UI、可复用、可由外部 OCCT 程序直接调用的边界层
+- 改动文件:
+  - [OcctDfmSdk.h](/D:/code/OcctImgui-worktree/src/api/OcctDfmSdk.h)
+  - [OcctDfmSdk.cpp](/D:/code/OcctImgui-worktree/src/api/OcctDfmSdk.cpp)
+  - [OcctDfmCapi.h](/D:/code/OcctImgui-worktree/src/api/OcctDfmCapi.h)
+  - [OcctDfmCapi.cpp](/D:/code/OcctImgui-worktree/src/api/OcctDfmCapi.cpp)
+  - [OcctDfmSession.h](/D:/code/OcctImgui-worktree/src/api/OcctDfmSession.h)
+  - [OcctDfmSession.cpp](/D:/code/OcctImgui-worktree/src/api/OcctDfmSession.cpp)
+  - [DfmOverlayBuilder.h](/D:/code/OcctImgui-worktree/src/api/DfmOverlayBuilder.h)
+  - [DfmOverlayBuilder.cpp](/D:/code/OcctImgui-worktree/src/api/DfmOverlayBuilder.cpp)
+  - [OcctView.cpp](/D:/code/OcctImgui-worktree/src/view/OcctView.cpp)
+  - [occt_dfm_session_test.cpp](/D:/code/OcctImgui-worktree/tests/occt_dfm_session_test.cpp)
+  - [occt_dfm_capi_test.cpp](/D:/code/OcctImgui-worktree/tests/occt_dfm_capi_test.cpp)
+  - [CMakeLists.txt](/D:/code/OcctImgui-worktree/CMakeLists.txt)
+- 改动说明:
+  - 新增 `OcctDfmSession`，负责:
+    - `loadTargetShape(...)`
+    - `loadTargetStepFile(...)`
+    - `loadDfmReportFromJson(...)`
+    - `loadDfmReportFromFile(...)`
+    - `getFaceId(...)`
+    - `getFaceSeverity(...)`
+    - `getFaceDisplayColor(...)`
+    - `getViolationsForFace(...)`
+    - `buildOverlay(...)`
+  - 新增 `DfmOverlayBuilder`，把原来 `OcctView` 里的 overlay 上色逻辑提炼为可复用函数
+  - 新增 `OcctDfmSdkSession` 作为 DLL 导出门面，并提供 `displayOverlay(...)` / `clearOverlay(...)`
+  - 新增给 C# 的 `extern "C"` 封装:
+    - `OcctDfm_CreateSession`
+    - `OcctDfm_LoadTargetStepFileW`
+    - `OcctDfm_LoadDfmReportFromFileW`
+    - `OcctDfm_LoadDfmReportFromJsonW`
+    - `OcctDfm_GetFaceSeverityW`
+    - `OcctDfm_GetFaceColorW`
+    - `OcctDfm_GetLastErrorLengthW` / `OcctDfm_CopyLastErrorW`
+    - `OcctDfm_GetVisualizationJsonLengthW` / `OcctDfm_CopyVisualizationJsonW`
+  - `OcctDfmSession` 新增 `buildVisualizationJson()`，把高亮 face、颜色和 violations 导出成 JSON，方便 C# 自己渲染
+  - `OcctView` 改为复用同一套 overlay 构建逻辑，避免 UI 与 SDK 两份颜色规则漂移
+  - CMake 新增 `OcctDfmSdk` 共享库目标，并把 `featureRecognizer.dll` 一并复制到输出目录
+- 验证:
+  - `cmake --build build\\DebugWT --config Debug --target OcctDfmSdk occt_dfm_session_test`
+  - `ctest --test-dir build\\DebugWT -C Debug -R occt_dfm_session_test -V`
+  - `cmake --build build\\DebugWT --config Debug --target occt_dfm_capi_test`
+  - `ctest --test-dir build\\DebugWT -C Debug -R occt_dfm_capi_test -V`
+  - `cmake -S . -B build\\ReleaseWT -G "Visual Studio 17 2022" -A x64 -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows -DCMAKE_INSTALL_PREFIX=D:/code/OcctImgui-worktree/install -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release`
+  - `cmake --build build\\ReleaseWT --config Release --target OcctDfmSdk`
+- 交付产物:
+  - Debug DLL: [OcctDfmSdk.dll](/D:/code/OcctImgui-worktree/build/DebugWT/bin/Debug/Debug/OcctDfmSdk.dll)
+  - Release DLL: [OcctDfmSdk.dll](/D:/code/OcctImgui-worktree/build/ReleaseWT/bin/Release/Release/OcctDfmSdk.dll)
+  - C# 头文件: [OcctDfmCapi.h](/D:/code/OcctImgui-worktree/src/api/OcctDfmCapi.h)
+  - C++ 头文件: [OcctDfmSdk.h](/D:/code/OcctImgui-worktree/src/api/OcctDfmSdk.h)
+- 回滚入口:
+  - 删除 `src/api/` 下这 3 个新增模块
+  - 回退 [OcctView.cpp](/D:/code/OcctImgui-worktree/src/view/OcctView.cpp) 中对 `DfmOverlayBuilder::buildOverlay(...)` 的复用
+  - 回退 [CMakeLists.txt](/D:/code/OcctImgui-worktree/CMakeLists.txt) 中 `OcctDfmSdk` 和 `occt_dfm_session_test` 注册
+
+## 20260313 STEP 导入默认按最大平面朝下
+- 问题:
+  - 不同 STEP 文件按各自原始坐标系显示，导致有的零件横着，有的零件竖着，不符合“装夹面朝下”的查看习惯
+- 根因:
+  - [ModelImporter.cpp](/D:/code/OcctImgui-worktree/src/model/ModelImporter.cpp) 导入 STEP 时只是 `ReadFile -> TransferRoots -> OneShape -> addShape`
+  - 当前程序没有任何装夹朝向归一化逻辑
+- 改动文件:
+  - [ShapeOrientationUtils.h](/D:/code/OcctImgui-worktree/src/model/ShapeOrientationUtils.h)
+  - [ShapeOrientationUtils.cpp](/D:/code/OcctImgui-worktree/src/model/ShapeOrientationUtils.cpp)
+  - [ModelImporter.cpp](/D:/code/OcctImgui-worktree/src/model/ModelImporter.cpp)
+  - [shape_orientation_utils_test.cpp](/D:/code/OcctImgui-worktree/tests/shape_orientation_utils_test.cpp)
+  - [CMakeLists.txt](/D:/code/OcctImgui-worktree/CMakeLists.txt)
+- 改动说明:
+  - 新增 `ShapeOrientationUtils::orientLargestPlanarFaceDown(...)`
+  - 规则:
+    - 扫描所有 planar face
+    - 选面积最大的一个
+    - 若面积并列，优先选择法向更接近 `-Z` 的那个，避免已“朝下”的零件被无意义翻转
+    - 把该平面法向旋到 `-Z`
+    - 围绕 shape 的包围盒中心旋转，尽量不引入额外位置漂移
+  - STEP 导入后先做这一步，再进入 `GeometryModel`
+- 验证:
+  - `cmake --build build\\DebugWT --config Debug --target shape_orientation_utils_test model_importer_test`
+  - `ctest --test-dir build\\DebugWT -C Debug -R shape_orientation_utils_test -V`
+  - `ctest --test-dir build\\DebugWT -C Debug -R model_importer_test -V`
+- 当前阻塞:
+  - 主程序 [OcctImgui.exe](/D:/code/OcctImgui-worktree/build/DebugWT/bin/Debug/Debug/OcctImgui.exe) 运行中，导致重链接时报 `LNK1168`
+- 回滚入口:
+  - 删除 [ShapeOrientationUtils.h](/D:/code/OcctImgui-worktree/src/model/ShapeOrientationUtils.h)
+  - 删除 [ShapeOrientationUtils.cpp](/D:/code/OcctImgui-worktree/src/model/ShapeOrientationUtils.cpp)
+  - 回退 [ModelImporter.cpp](/D:/code/OcctImgui-worktree/src/model/ModelImporter.cpp) 中对 `ShapeOrientationUtils::orientLargestPlanarFaceDown(...)` 的调用
+  - 回退 [CMakeLists.txt](/D:/code/OcctImgui-worktree/CMakeLists.txt) 中 `ShapeOrientationUtils.cpp` 和 `shape_orientation_utils_test` 注册
+
+## 20260312 Hover/空闲阶段原生崩溃
+- 根因:
+  - [OcctView.cpp](/D:/code/OcctImgui-worktree/src/view/OcctView.cpp) 在 hover/selection 路径直接用了 `AIS_InteractiveContext::DetectedShape()`
+  - 复制失效 `TopoDS` 句柄时触发 `c0000005`
+- 改动:
+  - 新增 [OcctShapeOwnerUtils.h](/D:/code/OcctImgui-worktree/src/view/OcctShapeOwnerUtils.h)
+  - `DetectedShape()` 改为 `DetectedOwner() -> StdSelect_BRepOwner -> TopoDS_Face`
+- 验证:
+  - `ctest --test-dir build\\DebugWT -C Debug -R occt_shape_owner_utils_test -V`
+
+## 20260312 DFM tooltip 中文问号
+- 根因:
+  - 初始未加载中文字体
+  - 后续 `ChineseSimplifiedCommon` glyph range 漏掉 `U+9608`（“阈”）
+- 改动:
+  - 新增 [ImGuiFontUtils.h](/D:/code/OcctImgui-worktree/src/view/ImGuiFontUtils.h)
+  - [ImGuiView.cpp](/D:/code/OcctImgui-worktree/src/view/ImGuiView.cpp) 改用系统中文字体 + `GetGlyphRangesChineseFull()`
+- 验证:
+  - `ctest --test-dir build\\DebugWT -C Debug -R imgui_font_utils_test -V`
