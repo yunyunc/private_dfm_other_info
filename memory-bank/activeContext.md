@@ -71,3 +71,8 @@
 - 20260423 已完成: GitHub 远端 `origin/main` 已与本地 `HEAD` 对齐.
 - 20260423 说明: 由于原目录没有 `.git`, 仓库历史从当前快照开始; `dist/`、`logs/` 等本地运行态已排除.
 - 20260423 next: 后续改动可直接在当前 `main` 分支继续提交并推送.
+# v1.9
+- 20260423 当前任务: 将已推送提交的 git 身份改写为 `Catherine.chen <yunyunc999@gmail.com>`.
+- 20260423 已完成: 本地两次历史提交已按原消息/原时间戳重建, 作者与提交者统一为 `Catherine.chen <yunyunc999@gmail.com>`.
+- 20260423 已创建本地备份分支: `backup/pre_identity_rewrite_20260423`.
+- 20260423 next: 生成工作项提交并对远端 `main` 执行 `--force-with-lease` 推送.

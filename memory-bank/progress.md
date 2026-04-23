@@ -69,3 +69,7 @@
 - 20260423 已完成: 当前工作区初始化 git 仓库并创建根提交 `13d600ecf11febf0439ef806e9d08ec4567d5210`.
 - 20260423 已完成: GitHub `origin/main` 已与本地提交对齐.
 - 20260423 已完成: `.gitignore` 补充本地运行态忽略, 删除失真的 `.gitmodules`.
+# v1.9
+- 20260423 进行中: 将 GitHub `main` 上历史提交身份改写为 `Catherine.chen <yunyunc999@gmail.com>`.
+- 20260423 已完成: 本地历史已重写, 当前分支相对远端状态为 `ahead 2, behind 2`.
+- 20260423 待完成: 提交 memory-bank 记录并 `push --force-with-lease` 到远端.
